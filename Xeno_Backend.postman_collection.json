@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "8b51fb3e-09a8-4228-b0a7-684293f8e562",
-		"name": "Xeno Backend Phase 4",
+		"name": "Xeno Backend Phase 5",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -895,6 +895,188 @@
 								"campaign",
 								"{{campaignId}}",
 								"insights"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Campaign Benchmark Comparison",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/analytics/campaign/{{campaignId}}/benchmark",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"analytics",
+								"campaign",
+								"{{campaignId}}",
+								"benchmark"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Best Channel",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/analytics/best-channel",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"analytics",
+								"best-channel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Best Segment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/analytics/best-segment",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"analytics",
+								"best-segment"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Trends",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/analytics/trends",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"analytics",
+								"trends"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Executive Summary",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/analytics/executive-summary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"analytics",
+								"executive-summary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Opportunities",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/analytics/opportunities",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"analytics",
+								"opportunities"
 							]
 						}
 					},
