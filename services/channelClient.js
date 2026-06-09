@@ -1,43 +1,54 @@
 import axios from 'axios';
 
-/**
- * Client service to communicate with the independent channel-service simulator
- */
 class ChannelClient {
   constructor() {
     this.simulatorUrl = process.env.CHANNEL_SERVICE_URL || 'http://localhost:5001';
   }
 
   /**
-   * Dispatch a message to the simulated channel
+   * Dispatch a message to the simulated channel service with retries
    * @param {Object} details - Message dispatch parameters
    * @param {string} details.recipient - Recipient identifier (phone or email)
+   * @param {string} details.customerId - Recipient Customer ID
    * @param {string} details.message - Message content string
-   * @param {string} details.channel - Channel type (SMS, Email, WhatsApp)
+   * @param {string} details.channel - Channel type (SMS, Email, WhatsApp, RCS)
    * @param {string} details.communicationId - ObjectId string for callback tracking
+   * @param {number} maxRetries - Maximum number of retries before throwing error (default 3)
    */
-  async sendMessage(details) {
-    try {
-      const callbackUrl = `http://localhost:5000/api/v1/communications/receipt`;
-      
-      console.log(`[CHANNEL CLIENT] Dispatching message for communication: ${details.communicationId} to simulator...`);
-      
-      const response = await axios.post(`${this.simulatorUrl}/send`, {
-        recipient: details.recipient,
-        message: details.message,
-        channel: details.channel,
-        communicationId: details.communicationId,
-        callbackUrl
-      }, {
-        timeout: 5000
-      });
+  async sendMessage(details, maxRetries = 3) {
+    const callbackUrl = `http://localhost:5000/api/v1/communications/receipt`;
+    const payload = {
+      communicationId: details.communicationId,
+      customerId: details.customerId,
+      recipient: details.recipient,
+      channel: details.channel,
+      message: details.message,
+      callbackUrl
+    };
 
-      return response.data;
-    } catch (error) {
-      console.error(`[CHANNEL CLIENT ERROR] Failed to send message via simulator: ${error.message}`);
-      // Return a simulated mock success or throw based on preference.
-      // We will log and proceed so that launching campaign doesn't fail even if simulator is down
-      return { success: false, error: error.message };
+    let attempt = 0;
+    while (attempt <= maxRetries) {
+      try {
+        console.log(`[CHANNEL CLIENT] Sending comm: ${details.communicationId} to simulator (Attempt ${attempt + 1}/${maxRetries + 1})...`);
+        
+        const response = await axios.post(`${this.simulatorUrl}/send`, payload, {
+          timeout: 4000
+        });
+
+        console.log(`[CHANNEL CLIENT SUCCESS] Simulator accepted comm: ${details.communicationId} on attempt ${attempt + 1}. Response:`, response.data);
+        return { success: true, data: response.data };
+      } catch (error) {
+        attempt++;
+        console.error(`[CHANNEL CLIENT WARNING] Attempt ${attempt} failed for comm ${details.communicationId}: ${error.message}`);
+        
+        if (attempt > maxRetries) {
+          console.error(`[CHANNEL CLIENT ERROR] Max retries exceeded for comm ${details.communicationId}. Marking as failed.`);
+          return { success: false, error: error.message };
+        }
+
+        // Wait 500ms before next retry
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
   }
 }

@@ -24,6 +24,9 @@ class AnalyticsService {
       clicked: 0,
       converted: 0,
       failed: 0,
+      deliveryRate: 0,
+      openRate: 0,
+      ctr: 0,
       conversionRate: 0
     };
 
@@ -54,10 +57,13 @@ class AnalyticsService {
       }
     });
 
-    // 3. Compute conversion rate percentage (converted / sent * 100)
-    metrics.conversionRate = metrics.sent > 0
-      ? parseFloat(((metrics.converted / metrics.sent) * 100).toFixed(2))
-      : 0;
+    // 3. Compute rate percentages (rounded to 2 decimal places)
+    if (metrics.sent > 0) {
+      metrics.deliveryRate = parseFloat(((metrics.delivered / metrics.sent) * 100).toFixed(2));
+      metrics.openRate = parseFloat(((metrics.opened / metrics.sent) * 100).toFixed(2));
+      metrics.ctr = parseFloat(((metrics.clicked / metrics.sent) * 100).toFixed(2));
+      metrics.conversionRate = parseFloat(((metrics.converted / metrics.sent) * 100).toFixed(2));
+    }
 
     return {
       campaignId,

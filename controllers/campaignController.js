@@ -4,6 +4,7 @@ import { Customer } from '../models/Customer.js';
 import { Communication } from '../models/Communication.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 import { NotFoundError, BadRequestError } from '../utils/errors.js';
+import { channelClient } from '../services/channelClient.js';
 
 /**
  * Create a new Campaign (Draft state)
@@ -146,9 +147,7 @@ export const launchCampaign = async (req, res, next) => {
 
     // 4. Create & Store Communication Records (In background to return response fast)
     setImmediate(async () => {
-      console.log(`[CAMPAIGN LAUNCH] Executing mock dispatch for Campaign: ${campaign._id} targeting ${customers.length} users.`);
-
-      const communicationRecords = [];
+      console.log(`[CAMPAIGN LAUNCH] Dispatching campaign: ${campaign._id} targeting ${customers.length} users to simulator...`);
 
       for (const customer of customers) {
         try {
@@ -161,11 +160,25 @@ export const launchCampaign = async (req, res, next) => {
             events: [{ status: 'sent', timestamp: new Date() }]
           });
 
-          communicationRecords.push(comm);
+          // 6. Dispatch to Simulator Client
+          const dispatchResult = await channelClient.sendMessage({
+            recipient: customer.email || customer.phone,
+            customerId: customer._id,
+            message: campaign.generatedMessage,
+            channel: campaign.channel,
+            communicationId: comm._id
+          });
 
-          // 6. Mock Dispatch lifecycle (Simulator integration will be Phase 4)
-          // We simulate a mock dispatch trigger here:
-          console.log(`[MOCK DISPATCH] Message queued to ${campaign.channel} recipient ${customer.email || customer.phone}`);
+          // 7. If initial dispatch fails, mark communication log as failed
+          if (!dispatchResult.success) {
+            comm.status = 'failed';
+            comm.events.push({
+              status: 'failed',
+              timestamp: new Date()
+            });
+            await comm.save();
+            console.error(`[CAMPAIGN LAUNCH] Simulator rejected dispatch for communication: ${comm._id}`);
+          }
         } catch (err) {
           console.error(`[CAMPAIGN LAUNCH ERROR] Failed to dispatch communication log: ${err.message}`);
         }
@@ -174,7 +187,7 @@ export const launchCampaign = async (req, res, next) => {
       // Automatically transition to completed once all records are generated/mock dispatched
       campaign.status = 'completed';
       await campaign.save();
-      console.log(`[CAMPAIGN LAUNCH] Mock dispatch completed for Campaign: ${campaign._id}.`);
+      console.log(`[CAMPAIGN LAUNCH] Dispatch completed for Campaign: ${campaign._id}.`);
     });
 
     return sendSuccess(
