@@ -61,7 +61,9 @@ app.get('/health', async (req, res) => {
   const geminiStatus = process.env.GEMINI_API_KEY ? 'connected' : 'disconnected';
   let simulatorStatus = 'disconnected';
   try {
-    const simRes = await axios.get('http://localhost:5001/health', { timeout: 1000 });
+    const simulatorUrl = process.env.SIMULATOR_URL || process.env.CHANNEL_SERVICE_URL || 'http://localhost:5001';
+    const cleanSimUrl = simulatorUrl.replace(/\/$/, '');
+    const simRes = await axios.get(`${cleanSimUrl}/health`, { timeout: 1000 });
     if (simRes.data && (simRes.data.status === 'healthy' || simRes.data.success)) {
       simulatorStatus = 'connected';
     } else if (simRes.status === 200) {
@@ -87,7 +89,9 @@ app.get('/api/v1/health', async (req, res) => {
   const geminiStatus = process.env.GEMINI_API_KEY ? 'connected' : 'disconnected';
   let simulatorStatus = 'disconnected';
   try {
-    const simRes = await axios.get('http://localhost:5001/health', { timeout: 1000 });
+    const simulatorUrl = process.env.SIMULATOR_URL || process.env.CHANNEL_SERVICE_URL || 'http://localhost:5001';
+    const cleanSimUrl = simulatorUrl.replace(/\/$/, '');
+    const simRes = await axios.get(`${cleanSimUrl}/health`, { timeout: 1000 });
     if (simRes.data && (simRes.data.status === 'healthy' || simRes.data.success)) {
       simulatorStatus = 'connected';
     } else if (simRes.status === 200) {

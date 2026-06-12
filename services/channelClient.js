@@ -2,7 +2,7 @@ import axios from 'axios';
 
 class ChannelClient {
   constructor() {
-    this.simulatorUrl = process.env.CHANNEL_SERVICE_URL || 'http://localhost:5001';
+    this.simulatorUrl = process.env.SIMULATOR_URL || process.env.CHANNEL_SERVICE_URL || 'http://localhost:5001';
   }
 
   /**
@@ -16,7 +16,9 @@ class ChannelClient {
    * @param {number} maxRetries - Maximum number of retries before throwing error (default 3)
    */
   async sendMessage(details, maxRetries = 3) {
-    const callbackUrl = `http://localhost:5000/api/v1/communications/receipt`;
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+    const cleanBackendUrl = backendUrl.replace(/\/$/, '');
+    const callbackUrl = `${cleanBackendUrl}/api/v1/communications/receipt`;
     const payload = {
       communicationId: details.communicationId,
       customerId: details.customerId,
@@ -31,6 +33,18 @@ class ChannelClient {
       try {
         console.log(`[CHANNEL CLIENT] Sending comm: ${details.communicationId} to simulator (Attempt ${attempt + 1}/${maxRetries + 1})...`);
         
+        console.log(
+          '[SIMULATOR]',
+          'Dispatch URL:',
+          `${this.simulatorUrl}/send`
+        );
+        
+        console.log(
+          '[SIMULATOR]',
+          'Callback URL:',
+          callbackUrl
+        );
+
         const response = await axios.post(`${this.simulatorUrl}/send`, payload, {
           timeout: 4000
         });
