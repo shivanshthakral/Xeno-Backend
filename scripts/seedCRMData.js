@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { Customer } from '../models/Customer.js';
 import { Order } from '../models/Order.js';
@@ -47,11 +49,15 @@ function getRandomRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function seedDatabase() {
+async function seedDatabase(options = {}) {
   try {
-    console.log('[SEED] Connecting to MongoDB database...');
-    await mongoose.connect(MONGO_URI);
-    console.log('[SEED] Connected successfully.');
+    if (!options.isFallback) {
+      console.log('[SEED] Connecting to MongoDB database...');
+      await mongoose.connect(MONGO_URI);
+      console.log('[SEED] Connected successfully.');
+    } else {
+      console.log('[SEED] Running in fallback mode. Reusing existing connection.');
+    }
 
     // Clean up existing database collections
     console.log('[SEED] Cleaning database collections...');
@@ -230,11 +236,23 @@ async function seedDatabase() {
     await Segment.insertMany(defaultSegments);
     console.log('[SEED] Default segments inserted successfully.');
     console.log('[SEED] Seeding operation completed successfully!');
-    process.exit(0);
+    if (!options.isFallback) {
+      process.exit(0);
+    }
   } catch (error) {
     console.error(`[SEED ERROR] Seeding process failed: ${error.message}`);
-    process.exit(1);
+    if (!options.isFallback) {
+      process.exit(1);
+    } else {
+      throw error;
+    }
   }
 }
 
-seedDatabase();
+export { seedDatabase };
+
+// Run if called directly from CLI
+const isMain = process.argv[1] && path.normalize(fileURLToPath(import.meta.url)) === path.normalize(process.argv[1]);
+if (isMain) {
+  seedDatabase();
+}

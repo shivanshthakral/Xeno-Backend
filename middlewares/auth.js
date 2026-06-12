@@ -20,7 +20,7 @@ export const authenticate = async (req, res, next) => {
     }
 
     // 2. Mock Firebase Token check for local development testing in Postman
-    if (env.nodeEnv === 'development' && token.startsWith('mock-firebase-')) {
+    if (env.nodeEnv === 'development' && process.env.ENABLE_REVIEWER_BYPASS === 'true' && token.startsWith('mock-firebase-')) {
       // Expect format: mock-firebase-[UID]-[NAME]-[EMAIL]
       const parts = token.split('-');
       const uid = parts[2] || 'mock_fb_uid_123';

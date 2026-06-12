@@ -12,7 +12,7 @@ import { channelClient } from '../services/channelClient.js';
  */
 export const createCampaign = async (req, res, next) => {
   try {
-    const { goal, customGoal, segmentId, channel, generatedMessage, predictedReach, predictedRevenue, aiMetadata } = req.body;
+    const { goal, customGoal, segmentId, channel, generatedMessage, predictedReach, predictedRevenue, aiMetadata, useHyperPersonalization } = req.body;
 
     const segment = await Segment.findById(segmentId);
     if (!segment) {
@@ -28,6 +28,7 @@ export const createCampaign = async (req, res, next) => {
       predictedReach: predictedReach || segment.customerCount,
       predictedRevenue: predictedRevenue || 0,
       aiMetadata: aiMetadata || {},
+      useHyperPersonalization: !!useHyperPersonalization,
       status: 'draft'
     });
 
@@ -72,7 +73,7 @@ export const getCampaignById = async (req, res, next) => {
  */
 export const updateCampaign = async (req, res, next) => {
   try {
-    const { goal, customGoal, segmentId, channel, generatedMessage, predictedReach, predictedRevenue, aiMetadata, status } = req.body;
+    const { goal, customGoal, segmentId, channel, generatedMessage, predictedReach, predictedRevenue, aiMetadata, useHyperPersonalization, status } = req.body;
 
     const campaign = await Campaign.findById(req.params.id);
     if (!campaign) {
@@ -90,6 +91,7 @@ export const updateCampaign = async (req, res, next) => {
     if (predictedReach !== undefined) campaign.predictedReach = predictedReach;
     if (predictedRevenue !== undefined) campaign.predictedRevenue = predictedRevenue;
     if (aiMetadata) campaign.aiMetadata = { ...campaign.aiMetadata, ...aiMetadata };
+    if (useHyperPersonalization !== undefined) campaign.useHyperPersonalization = !!useHyperPersonalization;
     if (status) campaign.status = status;
 
     if (segmentId) {
@@ -151,11 +153,42 @@ export const launchCampaign = async (req, res, next) => {
 
       for (const customer of customers) {
         try {
+          // Fetch order history for this customer if hyperPersonalization is active
+          let orderHistoryText = '';
+          if (campaign.useHyperPersonalization) {
+            try {
+              const OrderModel = mongoose.model('Order');
+              const orders = await OrderModel.find({ customerId: customer._id });
+              orderHistoryText = orders.map(order => {
+                const itemsText = order.items.map(item => `${item.quantity}x ${item.name} ($${item.price} each)`).join(', ');
+                return `- Date: ${order.createdAt.toISOString().split('T')[0]}, Items: [${itemsText}], Total: $${order.totalAmount}`;
+              }).join('\n');
+            } catch (historyErr) {
+              console.error(`[CAMPAIGN LAUNCH] Failed to fetch order history for ${customer.email}: ${historyErr.message}`);
+            }
+          }
+
+          // Generate personalized message or replace {{name}} placeholder
+          let finalMessage = campaign.generatedMessage;
+          if (campaign.useHyperPersonalization) {
+            const { geminiService } = await import('../services/geminiService.js');
+            finalMessage = await geminiService.generatePersonalizedMessage(
+              customer.name,
+              orderHistoryText,
+              campaign.goal,
+              campaign.generatedMessage
+            );
+          } else {
+            // Replace standard template placeholder
+            finalMessage = finalMessage.replace(/\{\{\s*name\s*\}\}/g, customer.name);
+          }
+
           // 5. Create Communication record with initial event history
           const comm = await Communication.create({
             campaignId: campaign._id,
             customerId: customer._id,
             channel: campaign.channel,
+            message: finalMessage,
             status: 'sent',
             events: [{ status: 'sent', timestamp: new Date() }]
           });
@@ -164,7 +197,7 @@ export const launchCampaign = async (req, res, next) => {
           const dispatchResult = await channelClient.sendMessage({
             recipient: customer.email || customer.phone,
             customerId: customer._id,
-            message: campaign.generatedMessage,
+            message: finalMessage,
             channel: campaign.channel,
             communicationId: comm._id
           });

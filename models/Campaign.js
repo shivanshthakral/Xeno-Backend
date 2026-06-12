@@ -45,6 +45,10 @@ const campaignSchema = new mongoose.Schema(
       channelReason: { type: String, trim: true },
       confidenceScore: { type: Number, min: 0, max: 100 }
     },
+    useHyperPersonalization: {
+      type: Boolean,
+      default: false
+    },
     status: {
       type: String,
       enum: {

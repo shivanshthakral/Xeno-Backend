@@ -194,6 +194,13 @@ class AnalyticsInsightsService {
     if (avgConversionRate >= 8) overallHealth = 'Excellent';
     else if (avgConversionRate >= 4) overallHealth = 'Good';
 
+    // Calculate dynamic growth score based on customer engagement database stats + live conversion rates
+    const avgCustomerEngagement = await Customer.aggregate([
+      { $group: { _id: null, avgScore: { $avg: '$engagementScore' } } }
+    ]);
+    const avgEngagement = avgCustomerEngagement.length > 0 ? avgCustomerEngagement[0].avgScore : 50;
+    const growthScore = Math.min(Math.round((avgEngagement * 0.8) + (avgConversionRate * 4)), 100) || 75;
+
     // 5. Biggest Opportunity & Risk heuristics
     const opportunities = await this.detectOpportunities();
     const biggestOpportunity = opportunities.length > 0 ? opportunities[0].title : 'Retarget recent clickers';
@@ -214,7 +221,8 @@ class AnalyticsInsightsService {
       monthlyRevenue,
       biggestOpportunity,
       biggestRisk,
-      nextRecommendation
+      nextRecommendation,
+      growthScore
     };
   }
 }

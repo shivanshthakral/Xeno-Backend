@@ -35,6 +35,10 @@ const communicationSchema = new mongoose.Schema(
       },
       required: [true, 'Channel is required']
     },
+    message: {
+      type: String,
+      trim: true
+    },
     status: {
       type: String,
       enum: ['sent', 'delivered', 'opened', 'clicked', 'converted', 'failed'],

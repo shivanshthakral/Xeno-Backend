@@ -3,6 +3,7 @@ import { AppError } from '../utils/errors.js';
 export const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
+  res.locals.error = err.message; // Save error message for requestLogger middleware
 
   // In development, log the full error stack trace
   if (process.env.NODE_ENV !== 'production') {

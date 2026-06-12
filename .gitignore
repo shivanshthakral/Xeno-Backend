@@ -6,3 +6,4 @@ firebase-service-account.json
 coverage/
 dist/
 build/
+logs/

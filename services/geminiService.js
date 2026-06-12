@@ -289,6 +289,66 @@ Only output raw JSON.`;
   async parseNaturalLanguageSegment(nlPrompt) {
     return this.generateMongoDBQuery(nlPrompt);
   }
+
+  /**
+   * AI Hyper-Personalized individual message copy writer
+   */
+  async generatePersonalizedMessage(customerName, orderHistory, goal, baseMessage) {
+    const prompt = `You are a growth marketing copywriter.
+Write a highly personalized, compelling marketing message for the customer "${customerName}".
+Use their purchase history to make it extremely personal (e.g. mention the item they bought, suggest accessories, or offer a coupon code).
+Make the tone exciting and attractive, using phrases like "the wait is over!" where appropriate.
+
+Customer Name: ${customerName}
+Campaign Goal: ${goal}
+Base Message Template: "${baseMessage}"
+
+Customer Order History:
+${orderHistory || 'No purchase history yet.'}
+
+Guidelines:
+- If they have purchased an item (like a keyboard, monitor, mouse, chair), reference that item and suggest custom keycaps, mouse pads, screen cleaners, ergonomic supports, or compatible accessories.
+- Keep the message extremely short and exciting (maximum 1-2 sentences).
+- Do not use placeholders. Write the final text ready to send.
+- Return ONLY the raw personalized text. No quotes.`;
+
+    if (genAI) {
+      try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim().replace(/^["']|["']$/g, '');
+      } catch (err) {
+        console.warn(`[GEMINI PERSONALIZATION WARNING] Calling API failed (${err.message}). Activating fallback...`);
+      }
+    }
+
+    // High-fidelity fallback exciting messaging
+    const excitingPhrases = [
+      'The wait is over!',
+      'Look what just dropped!',
+      'We have some exciting news!',
+      'Back by popular demand!',
+      'We restocked your favorites!'
+    ];
+    const phrase = excitingPhrases[Math.floor(Math.random() * excitingPhrases.length)];
+
+    let productReference = '';
+    if (orderHistory && orderHistory.trim()) {
+      const lowerHistory = orderHistory.toLowerCase();
+      if (lowerHistory.includes('keyboard')) productReference = 'Mechanical Keyboard';
+      else if (lowerHistory.includes('mouse')) productReference = 'Wireless Mouse';
+      else if (lowerHistory.includes('monitor')) productReference = '27-inch Monitor';
+      else if (lowerHistory.includes('chair')) productReference = 'Ergonomic Office Chair';
+      else if (lowerHistory.includes('hub')) productReference = 'USB-C Hub';
+      else if (lowerHistory.includes('headphones')) productReference = 'Noise Cancelling Headphones';
+    }
+
+    if (productReference) {
+      return `Hi ${customerName}! ${phrase} We noticed your ${productReference} could use some companion gear. Here is a 10% off coupon for compatible accessories we just restocked! Code: RESTOCK10`;
+    }
+
+    return `Hi ${customerName}! ${phrase} The wait is over. Here is a special 15% off coupon for our trending new gear just for you: Code: CRM15`;
+  }
 }
 
 export const geminiService = new GeminiService();
