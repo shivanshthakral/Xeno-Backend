@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import mongoose from 'mongoose';
 import axios from 'axios';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 // Load config
 import { env } from './config/env.js';
@@ -144,7 +146,26 @@ app.all('*', (req, res, next) => {
 app.use(errorHandler);
 
 // Start the server
-const server = app.listen(env.port, () => {
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+  }
+});
+
+app.set('socketio', io);
+
+io.on('connection', (socket) => {
+  console.log(`[SOCKET] Client connected: ${socket.id}`);
+  socket.on('disconnect', () => {
+    console.log(`[SOCKET] Client disconnected: ${socket.id}`);
+  });
+});
+
+server.listen(env.port, () => {
   console.log('\x1b[32m%s\x1b[0m', `[SERVER] CRM Service running in [${env.nodeEnv}] on port ${env.port}`);
 });
 

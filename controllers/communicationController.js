@@ -30,6 +30,16 @@ export const receiveReceipt = async (req, res, next) => {
     await comm.save();
     console.log(`[CALLBACK WEBHOOK] Receipt processed: Communication ${communicationId} updated status to ${status}.`);
 
+    // Emit Socket.io event after successful DB update
+    try {
+      const io = req.app.get('socketio');
+      if (io) {
+        io.emit('communication_update', comm);
+      }
+    } catch (ioErr) {
+      console.error(`[SOCKET IO ERROR] Failed to emit receipt update: ${ioErr.message}`);
+    }
+
     // Asynchronously update customer CRM intelligence metrics based on status callbacks
     setImmediate(async () => {
       try {
