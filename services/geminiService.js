@@ -69,7 +69,7 @@ Do not write markdown syntax. Return raw JSON.`;
         segment: 'New Registrations',
         reason: 'Recently registered accounts that have not completed their first transaction.',
         channel: 'SMS',
-        message: 'Hi {{name}}! Welcome to Xeno. Start shopping today and get free delivery on your first order. Coupon: FIRSTFREE',
+        message: 'Hi {{name}}! Welcome to our store. Start shopping today and get free delivery on your first order. Coupon: FIRSTFREE',
         predictedReach: 200,
         predictedRevenue: 3000
       };

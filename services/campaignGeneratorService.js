@@ -25,7 +25,7 @@ class CampaignGeneratorService {
     const predictedConvRate = await recommendationService.predictConversion(segmentName);
 
     // 4. Generate highly contextual marketing message via Gemini
-    let generatedMessage = `Hey {{name}}! We noticed you'd love our latest offers. Visit Xeno CRM today!`;
+    let generatedMessage = `Hey {{name}}! We noticed you'd love our latest offers. Visit our AI Powered CRM today!`;
     try {
       const geminiResult = await geminiService.generateCampaignStrategy(goal);
       if (geminiResult && geminiResult.message) {
